@@ -55,11 +55,11 @@ export default function Utama({ onNavigate }: UtamaProps) {
             </a>
           </h2>
           <div className="flex-1 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center relative min-h-[300px] shadow-inner border border-slate-200">
-            <img src="/infografik.png" alt="Infografik SMAG3" className="absolute inset-0 w-full h-full object-contain hover:scale-[1.02] transition-transform duration-500 cursor-pointer" onClick={() => window.open('https://www.facebook.com/SMAKG03/', '_blank')} />
+            <img src="https://drive.google.com/uc?export=view&id=16H5IrMcnjppOwvxH4NSPjE9NhiIm07ku" alt="Infografik SMAG3" className="absolute inset-0 w-full h-full object-contain hover:scale-[1.02] transition-transform duration-500 cursor-pointer" onClick={() => window.open('https://tinyurl.com/y5h7jxxx', '_blank')} referrerPolicy="no-referrer" />
             
             {/* Fallback jika gambar tiada */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-4 text-center pointer-events-none opacity-50">
-               <span className="text-sm">Sila layari Facebook SMAG3</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-4 text-center pointer-events-none -z-10">
+               <span className="text-sm font-medium">Memuatkan infografik...</span>
             </div>
           </div>
         </div>
