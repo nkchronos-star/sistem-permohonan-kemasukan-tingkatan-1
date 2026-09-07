@@ -92,7 +92,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('smag3_state');
     if (saved) {
-      return JSON.parse(saved);
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Gagal memuatkan state, menggunakan data lalai', e);
+      }
     }
     return {
       settings: defaultSettings,

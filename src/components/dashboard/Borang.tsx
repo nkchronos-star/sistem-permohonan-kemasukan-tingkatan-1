@@ -10,7 +10,13 @@ export default function Borang() {
   // Form State
   const [formData, setFormData] = useState<Partial<Candidate>>(() => {
     const saved = localStorage.getItem('borang_draft');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Gagal memuatkan draf borang, mungkin data rosak', e);
+      }
+    }
     return {
       jantina: '',
       pbd: { bm: '', bi: '', matematik: '', sains: '' },
@@ -26,7 +32,18 @@ export default function Borang() {
   // Auto save draft
   useEffect(() => {
     if (!submitted) {
-      localStorage.setItem('borang_draft', JSON.stringify(formData));
+      try {
+        // Create a copy of formData without large images for local draft to avoid QuotaExceededError
+        const draftData = JSON.parse(JSON.stringify(formData));
+        if (draftData.gambarUrl && draftData.gambarUrl.length > 500000) draftData.gambarUrl = ''; // strip large image
+        if (draftData.pbd && draftData.pbd.slipUrl && draftData.pbd.slipUrl.length > 500000) draftData.pbd.slipUrl = '';
+        if (draftData.pbdD6 && draftData.pbdD6.slipUrl && draftData.pbdD6.slipUrl.length > 500000) draftData.pbdD6.slipUrl = '';
+        if (draftData.upkk && draftData.upkk.slipUrl && draftData.upkk.slipUrl.length > 500000) draftData.upkk.slipUrl = '';
+        
+        localStorage.setItem('borang_draft', JSON.stringify(draftData));
+      } catch (e) {
+        console.warn('Gagal menyimpan draf ke localStorage (saiz fail mungkin terlalu besar)', e);
+      }
     }
   }, [formData, submitted]);
 
