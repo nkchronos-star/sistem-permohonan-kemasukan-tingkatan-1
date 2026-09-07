@@ -1,4 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User as FirebaseUser } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import { Candidate, ApplicationSettings, User, Infographic } from './types';
 
 interface AppState {
@@ -6,6 +11,8 @@ interface AppState {
   candidates: Candidate[];
   users: User[];
   currentUser: User | null;
+  firebaseUser: FirebaseUser | null;
+  userRole: 'admin' | 'staff' | 'calon' | null;
   infographics: Infographic[];
 }
 
@@ -103,6 +110,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       candidates: mockCandidates,
       users: defaultUsers,
       currentUser: null,
+      firebaseUser: null,
+      userRole: null,
       infographics: [],
     };
   });

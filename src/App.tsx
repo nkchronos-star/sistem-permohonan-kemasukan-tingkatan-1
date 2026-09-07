@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { AppProvider } from './store';
+import { signInWithGoogle, logoutUser } from './lib/auth';
+import { useAppContext } from './store';
 import { Home, FileText, CheckCircle, GraduationCap, Settings, BookOpen, Menu, X } from 'lucide-react';
 import Utama from './components/dashboard/Utama';
 import Panduan from './components/dashboard/Panduan';
@@ -11,6 +13,7 @@ import AdminPanel from './components/dashboard/AdminPanel';
 type View = 'utama' | 'panduan' | 'borang' | 'temuduga' | 'tawaran' | 'admin';
 
 function AppContent() {
+  const { firebaseUser } = useAppContext();
   const [activeView, setActiveView] = useState<View>('utama');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -38,11 +41,21 @@ function AppContent() {
               <p className="text-emerald-100/90 text-sm">27000 Jerantut, Pahang</p>
             </div>
           </div>
-          <div className="hidden md:block">
-            <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-md font-medium text-sm">
+          
+          <div className="hidden md:flex items-center">
+            <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-md font-medium text-sm mr-4">
               Sesi Kemasukan 2026/2027
             </span>
+            {firebaseUser ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-emerald-100">{firebaseUser.email}</span>
+                <button onClick={logoutUser} className="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md font-bold">Log Keluar</button>
+              </div>
+            ) : (
+              <button onClick={signInWithGoogle} className="text-sm bg-white hover:bg-slate-100 text-[#0c6b4b] px-4 py-2 rounded-md font-bold">Daftar / Log Masuk</button>
+            )}
           </div>
+
           <button className="md:hidden text-white p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

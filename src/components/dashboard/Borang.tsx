@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
-import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle, X } from 'lucide-react';
+import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle, X, LogIn } from 'lucide-react';
 import { Candidate } from '../../types';
+import { signInWithGoogle } from '../../lib/auth';
+import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 export default function Borang() {
-  const { settings, saveCandidate } = useAppContext();
+  const { settings, saveCandidate, firebaseUser } = useAppContext();
   const isBuka = settings.borangBuka;
 
   // Form State
@@ -28,6 +32,30 @@ export default function Borang() {
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Load Draft from Firebase
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (firebaseUser) {
+        try {
+          const docRef = doc(db, 'permohonan', firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             const data = docSnap.data();
+             if (data.candidateData) {
+                setFormData(data.candidateData);
+                if (data.status === 'submitted') {
+                   setSubmitted(true);
+                }
+             }
+          }
+        } catch (e) {
+          console.error('Failed to load draft from Firebase', e);
+        }
+      }
+    };
+    loadDraft();
+  }, [firebaseUser]);
+
   const [popup, setPopup] = useState({ show: false, title: '', message: '' });
 
   // Auto save draft
@@ -321,10 +349,31 @@ export default function Borang() {
     };
 
     try {
-      // 1. Simpan ke sistem/local storage
+      // 1. Simpan ke Firebase (Cloud Database)
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        alert('Sila log masuk dahulu untuk menghantar borang.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const permohonanId = Math.random().toString(36).substr(2, 9);
+      newCandidate.id = permohonanId;
+
+      await setDoc(doc(db, 'permohonan', permohonanId), {
+        userId: userId,
+        status: 'draft',
+        studentName: newCandidate.name || 'Tiada Nama',
+        icNumber: newCandidate.ic || 'Tiada IC',
+        candidateData: newCandidate,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'permohonan'));
+
+      // 2. Simpan ke Local State untuk update paparan serta merta
       saveCandidate(newCandidate);
 
-      // 2. Format data untuk dihantar ke Google Sheets Web App
+      // 3. Format data untuk dihantar ke Google Sheets Web App (Backup)
       const sheetData = new URLSearchParams();
       sheetData.append('ID', newCandidate.id);
       sheetData.append('Tarikh', new Date().toISOString());
@@ -386,6 +435,24 @@ export default function Borang() {
       setIsSubmitting(false);
     }
   };
+
+  if (!firebaseUser) {
+    return (
+      <div className="animate-in fade-in duration-500 max-w-xl mx-auto mt-12">
+         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 p-10 text-center">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+               <FileText className="w-10 h-10" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Akses Borang Permohonan</h2>
+            <p className="text-slate-600 mb-8">Sila log masuk menggunakan akaun Google anda untuk mula mengisi borang permohonan kemasukan ke tingkatan 1.</p>
+            <button onClick={signInWithGoogle} className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-md hover:shadow-lg">
+               <LogIn className="w-5 h-5" />
+               Log Masuk dengan Google
+            </button>
+         </div>
+      </div>
+    );
+  }
 
   if (!isBuka) {
     return (
