@@ -159,7 +159,7 @@ function TahfizView() {
   const [activeTab, setActiveTab] = useState<'isi'|'lihat'>('isi');
   const [selectedCandidate, setSelectedCandidate] = useState('');
   const [editId, setEditId] = useState('');
-  const [markah, setMarkah] = useState({ hafazan: 0, tilawah: 0, sahsiah: 0 });
+  const [markah, setMarkah] = useState({ jumlah: 0, catatan: '' });
 
   const pendingCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK' && !c.markahTahfiz);
   const currentC = candidates.find(c => c.ic === selectedCandidate);
@@ -176,8 +176,8 @@ function TahfizView() {
 
     updateCandidate(targetIc, {
       markahTahfiz: {
-        ...markah,
-        jumlah: Number(markah.hafazan) + Number(markah.tilawah) + Number(markah.sahsiah),
+        jumlah: Number(markah.jumlah),
+        catatan: markah.catatan,
         dinilaiOleh: currentUser?.name,
         tarikhDinilai: today
       }
@@ -188,7 +188,7 @@ function TahfizView() {
     } else {
        setSelectedCandidate('');
     }
-    setMarkah({ hafazan: 0, tilawah: 0, sahsiah: 0 });
+    setMarkah({ jumlah: 0, catatan: '' });
   };
 
   const startEdit = (c: any) => {
@@ -199,9 +199,8 @@ function TahfizView() {
      }
      setEditId(c.ic);
      setMarkah({
-        hafazan: c.markahTahfiz.hafazan || 0,
-        tilawah: c.markahTahfiz.tilawah || 0,
-        sahsiah: c.markahTahfiz.sahsiah || 0
+        jumlah: c.markahTahfiz.jumlah || 0,
+        catatan: c.markahTahfiz.catatan || ''
      });
   };
 
@@ -227,7 +226,7 @@ function TahfizView() {
              <select 
                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-medium text-slate-800 bg-white shadow-sm appearance-none"
                value={selectedCandidate}
-               onChange={(e) => {setSelectedCandidate(e.target.value); setMarkah({hafazan:0, tilawah:0, sahsiah:0});}}
+               onChange={(e) => {setSelectedCandidate(e.target.value); setMarkah({jumlah:0, catatan:''});}}
              >
                <option value="">-- Pilih Calon --</option>
                {pendingCandidates.map(c => (
@@ -241,29 +240,34 @@ function TahfizView() {
 
            {currentC && (
              <div className="bg-slate-50/50 rounded-[2rem] p-8 border-2 border-emerald-100 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-100/30">
-               <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100/50">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest block mb-1">Maklumat Calon:</span>
-                  <span className="font-extrabold text-2xl text-slate-900 block mb-1">{currentC.name}</span>
-                  <span className="font-medium text-slate-500 bg-slate-50 px-3 py-1 rounded-md inline-block">{currentC.ic}</span>
+               <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100/50 flex gap-6 items-start flex-col sm:flex-row">
+                  {currentC.gambarUrl ? (
+                     <img src={currentC.gambarUrl} alt={currentC.name} className="w-24 h-32 object-cover rounded-xl border border-slate-200 shrink-0" />
+                  ) : (
+                     <div className="w-24 h-32 bg-slate-100 rounded-xl flex items-center justify-center text-xs text-slate-400 font-medium shrink-0 border border-slate-200">Tiada Gambar</div>
+                  )}
+                  <div>
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest block mb-1">Maklumat Calon:</span>
+                    <span className="font-extrabold text-2xl text-slate-900 block mb-1">{currentC.name}</span>
+                    <span className="font-medium text-slate-500 bg-slate-50 px-3 py-1 rounded-md inline-block mb-3">{currentC.ic}</span>
+                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                       <p><span className="font-bold">Asal:</span> {currentC.daerah}, {currentC.negeri}</p>
+                       <p><span className="font-bold">Sekolah:</span> {currentC.namaSekolahRendah}</p>
+                       <p><span className="font-bold">Status Borang:</span> {currentC.statusBorang}</p>
+                    </div>
+                  </div>
                </div>
                
                <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Hafazan (70%)</label>
-                      <input type="number" max="70" min="0" required value={markah.hafazan} onChange={e=>setMarkah({...markah, hafazan: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
+                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Markah Keseluruhan Temuduga (0-100)</label>
+                      <input type="number" max="100" min="0" required value={markah.jumlah} onChange={e=>setMarkah({...markah, jumlah: Number(e.target.value)})} className="w-full sm:w-1/2 p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
+                      <p className="text-xs text-slate-500 mt-2">Ditetapkan oleh admin kerana format pemarkahan masih dalam perbincangan.</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Tilawah (25%)</label>
-                      <input type="number" max="25" min="0" required value={markah.tilawah} onChange={e=>setMarkah({...markah, tilawah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Sahsiah (5%)</label>
-                      <input type="number" max="5" min="0" required value={markah.sahsiah} onChange={e=>setMarkah({...markah, sahsiah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Jumlah Keseluruhan</label>
-                      <input type="text" readOnly value={Number(markah.hafazan) + Number(markah.tilawah) + Number(markah.sahsiah)} className="w-full p-4 rounded-xl border-2 border-slate-200 bg-slate-100 font-extrabold text-xl text-slate-900" />
+                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Catatan / Ulasan Penemuduga</label>
+                      <textarea value={markah.catatan} onChange={e=>setMarkah({...markah, catatan: e.target.value})} className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white text-slate-800 transition-all min-h-[120px]" placeholder="Masukkan komen atau ulasan tentang calon..." />
                     </div>
                   </div>
                   <div className="pt-6 flex justify-end">
@@ -284,18 +288,14 @@ function TahfizView() {
                       <button onClick={() => setEditId('')} className="text-slate-500 hover:text-slate-800 font-bold">Batal</button>
                    </div>
                    <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-6 max-w-3xl">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
                         <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Hafazan (70%)</label>
-                          <input type="number" max="70" min="0" required value={markah.hafazan} onChange={e=>setMarkah({...markah, hafazan: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
+                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Markah Keseluruhan (0-100)</label>
+                          <input type="number" max="100" min="0" required value={markah.jumlah} onChange={e=>setMarkah({...markah, jumlah: Number(e.target.value)})} className="w-full sm:w-1/2 p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
                         </div>
                         <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Tilawah (25%)</label>
-                          <input type="number" max="25" min="0" required value={markah.tilawah} onChange={e=>setMarkah({...markah, tilawah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Sahsiah (5%)</label>
-                          <input type="number" max="5" min="0" required value={markah.sahsiah} onChange={e=>setMarkah({...markah, sahsiah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
+                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Catatan / Ulasan</label>
+                          <textarea value={markah.catatan} onChange={e=>setMarkah({...markah, catatan: e.target.value})} className="w-full p-4 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white text-slate-800 transition-all min-h-[100px]" />
                         </div>
                       </div>
                       <button type="submit" className="bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-700 w-full sm:w-auto mt-6">Kemaskini Markah</button>
@@ -307,9 +307,7 @@ function TahfizView() {
                    <thead className="bg-slate-100/50">
                       <tr>
                          <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Nama Calon & IC</th>
-                         <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Hafazan</th>
-                         <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Tilawah</th>
-                         <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Sahsiah</th>
+                         <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-left">Catatan</th>
                          <th className="px-4 py-4 text-xs font-bold text-emerald-700 uppercase tracking-widest border-b border-slate-200 bg-emerald-50/50 text-center">Jumlah</th>
                          <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Tindakan</th>
                       </tr>
@@ -324,9 +322,7 @@ function TahfizView() {
                                   <div className="font-bold text-slate-800">{c.name}</div>
                                   <div className="text-xs text-slate-500 mt-1">{c.ic}</div>
                                </td>
-                               <td className="px-4 py-4 text-center font-medium">{c.markahTahfiz?.hafazan}</td>
-                               <td className="px-4 py-4 text-center font-medium">{c.markahTahfiz?.tilawah}</td>
-                               <td className="px-4 py-4 text-center font-medium">{c.markahTahfiz?.sahsiah}</td>
+                               <td className="px-4 py-4 text-left font-medium text-slate-600 text-sm">{c.markahTahfiz?.catatan || '-'}</td>
                                <td className="px-4 py-4 text-center font-bold text-emerald-700 bg-emerald-50/30">{c.markahTahfiz?.jumlah}</td>
                                <td className="px-4 py-4 text-center">
                                   <button onClick={() => startEdit(c)} className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded font-bold">Edit</button>
@@ -381,11 +377,13 @@ function AkademikView() {
         const next = {
            ...prev,
            [ic]: {
-              ...(prev[ic] || {bm:0, bi:0, sains:0, matematik:0}),
+              ...(prev[ic] || {jumlah:0, catatan:''}),
               [subject]: val
            }
         };
-        localStorage.setItem('akademik_draft', JSON.stringify(next));
+        try {
+           localStorage.setItem('akademik_draft', JSON.stringify(next));
+        } catch(e) {}
         setIsSaved(false);
         return next;
      });
@@ -396,11 +394,11 @@ function AkademikView() {
      
      Object.keys(bulkMarks).forEach(ic => {
         const marks = bulkMarks[ic];
-        const jumlah = Number(marks.bm) + Number(marks.bi) + Number(marks.sains) + Number(marks.matematik);
+        const jumlah = Number(marks.jumlah);
         updateCandidate(ic, {
            markahAkademik: {
-              ...marks,
               jumlah,
+              catatan: marks.catatan,
               dinilaiOleh: currentUser?.name,
               tarikhDinilai: today
            }
@@ -431,11 +429,8 @@ function AkademikView() {
                 <thead className="bg-slate-100/50">
                    <tr>
                       <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Nama Calon & IC</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">BM (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">BI (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Sains (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Math (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-emerald-700 uppercase tracking-widest border-b border-slate-200 bg-emerald-50/50 text-center">Jumlah</th>
+                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Markah Keseluruhan</th>
+                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-left">Catatan</th>
                    </tr>
                 </thead>
                 <tbody>
@@ -448,7 +443,7 @@ function AkademikView() {
                       </tr>
                    ) : (
                       eligibleCandidates.map(c => {
-                         const marks = bulkMarks[c.ic] || {bm:0, bi:0, sains:0, matematik:0};
+                         const marks = bulkMarks[c.ic] || {jumlah:0, catatan:''};
                          const total = Number(marks.bm) + Number(marks.bi) + Number(marks.sains) + Number(marks.matematik);
                          
                          return (

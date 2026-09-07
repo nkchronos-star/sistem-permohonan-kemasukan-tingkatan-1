@@ -100,24 +100,24 @@ export interface Candidate {
   statusTemuduga: 'LAYAK' | 'TIDAK_LAYAK' | 'MENUNGGU';
   
   markahTahfiz?: {
-    hafazan: number; // /70
-    tilawah: number; // /25
-    sahsiah: number; // /5
+    hafazan?: number; // /70
+    tilawah?: number; // /25
+    sahsiah?: number; // /5
     jumlah: number;
     dinilaiOleh?: string;
     tarikhDinilai?: string;
+    catatan?: string;
   };
-
   markahAkademik?: {
-    bm: number;
-    bi: number;
-    sains: number;
-    matematik: number;
+    bm?: number;
+    bi?: number;
+    sains?: number;
+    matematik?: number;
     jumlah: number;
     dinilaiOleh?: string;
     tarikhDinilai?: string;
+    catatan?: string;
   };
-
   statusTawaran: 'BERJAYA' | 'GAGAL' | 'DALAM_PERTIMBANGAN';
   maklumBalasTawaran?: 'TERIMA' | 'TOLAK';
 }

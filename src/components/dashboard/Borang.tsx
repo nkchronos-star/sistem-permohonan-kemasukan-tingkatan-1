@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
-import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle } from 'lucide-react';
+import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle, X } from 'lucide-react';
 import { Candidate } from '../../types';
 
 export default function Borang() {
@@ -28,6 +28,7 @@ export default function Borang() {
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [popup, setPopup] = useState({ show: false, title: '', message: '' });
 
   // Auto save draft
   useEffect(() => {
@@ -144,6 +145,18 @@ export default function Borang() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string, isNested?: string) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (e.g. max 2MB)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        setPopup({
+          show: true,
+          title: 'Saiz Fail Terlalu Besar',
+          message: 'Saiz fail atau gambar melebihi had maksimum 2MB. Sila kecilkan saiz gambar anda sebelum memuat naik (contohnya dengan menangkap layar / screenshot gambar tersebut).'
+        });
+        // Reset the file input so it doesn't hold the large file
+        e.target.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
@@ -391,7 +404,7 @@ export default function Borang() {
 
   if (submitted) {
     return (
-      <div className="animate-in fade-in py-10 px-4 max-w-4xl mx-auto print:py-0 print:px-0">
+      <div className="animate-in fade-in py-10 px-4 max-w-4xl mx-auto print:py-0 print:px-0 printable-area">
         <div className="bg-white p-8 sm:p-12 rounded-2xl shadow-sm border border-emerald-100 print:shadow-none print:border-none print:p-0">
           
           <div className="text-center mb-8 print:hidden">
@@ -400,19 +413,32 @@ export default function Borang() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Permohonan Berjaya Dihantar!</h2>
             <p className="text-gray-600 mb-6">Terima kasih. Sila cetak atau simpan borang ini sebagai rujukan (PDF).</p>
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={() => window.print()}
-                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-bold flex items-center gap-2"
-              >
-                Cetak Borang / Simpan PDF
-              </button>
-              <button 
-                onClick={() => window.location.reload()}
-                className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-bold"
-              >
-                Kembali
-              </button>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => {
+                    window.print();
+                    // Fallback for sandboxed iframes where print might be blocked silently
+                    setTimeout(() => {
+                      if (document.visibilityState === 'visible') {
+                        // Just a small UX improvement, not a perfect check
+                      }
+                    }, 1000);
+                  }}
+                  className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-bold flex items-center gap-2"
+                >
+                  Cetak Borang / Simpan PDF
+                </button>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-bold"
+                >
+                  Kembali
+                </button>
+              </div>
+              <p className="text-xs text-amber-600 font-medium max-w-sm mt-2">
+                *Nota: Jika butang tidak bertindak balas (disebabkan sekatan pelayar web pratonton), sila klik kanan dan pilih "Print" atau buka aplikasi di Tetingkap Baru (New Tab) / tekan Ctrl+P.
+              </p>
             </div>
           </div>
 
